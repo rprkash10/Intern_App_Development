@@ -9,6 +9,85 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool _isPasswordVisible = false; // State variable to toggle password visibility
+  final _formKey = GlobalKey<FormState>(); // Key for form validation
+
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    // Dispose controllers to prevent memory leaks
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  // Validation functions
+  String? _validateEmail(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Email cannot be empty';
+    } else if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+      return 'Enter a valid email';
+    }
+    return null;
+  }
+
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Password cannot be empty';
+    }
+    return null;
+  }
+
+  void _login() {
+    if (_formKey.currentState?.validate() ?? false) {
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return Dialog(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(width: 20),
+                  Text("Logging in..."),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+
+      // Simulate a delay for the login process
+      Future.delayed(Duration(seconds: 2), () {
+        // Dismiss the loading dialog
+        Navigator.pop(context);
+
+        // Show success dialog
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text("Success"),
+              content: Text("Logged in successfully!"),
+              actions: [
+                TextButton(
+                  child: Text("OK"),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,27 +140,36 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 40),
-                    child: Column(
-                      children: <Widget>[
-                        inputFile(label: "Email"),
-                        inputFile(
-                          label: "Password",
-                          obscureText: !_isPasswordVisible,
-                          // Add toggle button
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _isPasswordVisible
-                                  ? Icons.visibility
-                                  : Icons.visibility_off,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _isPasswordVisible = !_isPasswordVisible;
-                              });
-                            },
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        children: <Widget>[
+                          inputFile(
+                            label: "Email",
+                            controller: _emailController,
+                            validator: _validateEmail,
                           ),
-                        ),
-                      ],
+                          inputFile(
+                            label: "Password",
+                            controller: _passwordController,
+                            validator: _validatePassword,
+                            obscureText: !_isPasswordVisible,
+                            // Add toggle button
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _isPasswordVisible
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _isPasswordVisible = !_isPasswordVisible;
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   Padding(
@@ -90,17 +178,12 @@ class _LoginPageState extends State<LoginPage> {
                       padding: EdgeInsets.only(top: 3, left: 3),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(50),
-                        border: Border(
-                          bottom: BorderSide(color: Colors.black),
-                          top: BorderSide(color: Colors.black),
-                          left: BorderSide(color: Colors.black),
-                          right: BorderSide(color: Colors.black),
-                        ),
+                        border: Border.all(color: Colors.black),
                       ),
                       child: MaterialButton(
                         minWidth: double.infinity,
                         height: 50,
-                        onPressed: () {},
+                        onPressed: _login,
                         color: Color(0xff0095FF),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
@@ -110,7 +193,7 @@ class _LoginPageState extends State<LoginPage> {
                           "Login",
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
-                            fontSize: 22,
+                            fontSize: 18,
                             color: Colors.white,
                           ),
                         ),
@@ -140,7 +223,6 @@ class _LoginPageState extends State<LoginPage> {
                       ],
                     ),
                   ),
-
                   Container(
                     padding: EdgeInsets.only(top: 100),
                     height: 200,
@@ -160,9 +242,10 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // Updated inputFile function
   Widget inputFile({
     required String label,
+    required TextEditingController controller,
+    required String? Function(String?) validator,
     bool obscureText = false,
     Widget? suffixIcon,
   }) {
@@ -180,7 +263,8 @@ class _LoginPageState extends State<LoginPage> {
         SizedBox(
           height: 5,
         ),
-        TextField(
+        TextFormField(
+          controller: controller,
           obscureText: obscureText,
           decoration: InputDecoration(
             contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 10),
@@ -196,6 +280,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
             suffixIcon: suffixIcon, // Add suffixIcon to show/hide password
           ),
+          validator: validator,
         ),
         SizedBox(height: 10),
       ],
