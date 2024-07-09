@@ -106,7 +106,7 @@ class _SignupPageState extends State<SignupPage> {
       return 'Phone number cannot be empty';
     } else if (!RegExp(r'^\d+$').hasMatch(value)) {
       return 'Enter a valid phone number (only digits)';
-    } else if (value.length < 10 || value.length > 10) {
+    } else if (value.length != 10) {
       return 'Phone number should be 10 digits';
     }
     return null;
@@ -117,6 +117,64 @@ class _SignupPageState extends State<SignupPage> {
       return 'Address cannot be empty';
     }
     return null;
+  }
+
+  // Function to show loading dialog
+  void _showLoadingDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 20),
+                Text("Signing up..."),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Function to show success dialog
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Success"),
+          content: Text("Signed up successfully!"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginPage()),
+                );
+              },
+              child: Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Function to simulate signup process
+  void _simulateSignupProcess() async {
+    _showLoadingDialog();
+
+    await Future.delayed(Duration(seconds: 3)); // Simulate a network call
+
+    Navigator.of(context).pop(); // Close the loading dialog
+    _showSuccessDialog();
   }
 
   @override
@@ -276,10 +334,7 @@ class _SignupPageState extends State<SignupPage> {
                       ),
                       onPressed: () {
                         if (_formKey.currentState?.validate() ?? false) {
-                          // Form is valid
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Signing up...')),
-                          );
+                          _simulateSignupProcess();
                         }
                       },
                       child: Text(
@@ -293,7 +348,6 @@ class _SignupPageState extends State<SignupPage> {
                     ),
                   ),
                 ),
-
                 SizedBox(height: 10),
                 // Login Link
                 Row(
@@ -305,7 +359,7 @@ class _SignupPageState extends State<SignupPage> {
                         // Navigate to login page
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => LoginPage()), // Replace LoginPage with your actual login page class
+                          MaterialPageRoute(builder: (context) => LoginPage()),
                         );
                       },
                       child: Text(
